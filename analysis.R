@@ -1,32 +1,27 @@
 # Load Packages -----------------------------------------------------------
-sapply(c("ggplot2", "PerformanceAnalytics", "bit64"), require, character.only = TRUE)
+sapply(c("ggplot2", "PerformanceAnalytics"), require, character.only = TRUE)
+# devtools::install_github("martinkabe/RSQLS", force = TRUE)
 
 # Load Properties ---------------------------------------------------------
 source('./crypto_class.R')
 path_to_file <- "./data/"
-
-# https://coinmarketcap.com/currencies/ethereum/historical-data/?start=20150101&end=20210213
-
-# Analytics ---------------------------------------------------------------
-ethereum <- CleanHtmlData$new(path_to_file, "ethereum.csv")
-bitcoin <- CleanHtmlData$new(path_to_file, "bitcoin.csv")
-cardano <- CleanHtmlData$new(path_to_file, "cardano.csv")
-polkadot <- CleanHtmlData$new(path_to_file, "polkadot.csv")
-
-
-# Update the data in DB ---------------------------------------------------
-# devtools::install_github("martinkabe/RSQLS", force = TRUE)
+table_name <- "dbo.cryptocurrency"
 cs <- set_connString(datasource = Sys.getenv()[["Crypto_DataSource"]], 
                      database = "CryptoDB", 
                      usr = Sys.getenv()[["Crypto_User"]],
                      pwd = Sys.getenv()[["Crypto_Pwd"]])
+
 # RSQLS::get_DB_info(cs)
 
-### get historical data from db
-ethereum_data <- ethereum$getCryptoDataFromDB(connString = cs, dateFrom = "2021-01-01")
-ethereum_data <- ethereum$getCryptoDataFromDB(connString = cs, dateTo = "2021-01-01")
-ethereum_data <- ethereum$getCryptoDataFromDB(connString = cs, dateFrom = "2020-01-01", dateTo = "2020-12-31")
+# Analytics ---------------------------------------------------------------
+# https://coinmarketcap.com/currencies/ethereum/historical-data/?start=20150101&end=20210213
+ethereum <- CleanHtmlData$new(path_to_file, "ethereum.csv", table_name)
+bitcoin <- CleanHtmlData$new(path_to_file, "bitcoin.csv", table_name)
+cardano <- CleanHtmlData$new(path_to_file, "cardano.csv", table_name)
+polkadot <- CleanHtmlData$new(path_to_file, "polkadot.csv", table_name)
 
+
+# Update the data in DB ---------------------------------------------------
 ### update the data
 ethereum$updateData(connString = cs)
 bitcoin$updateData(connString = cs)
@@ -37,6 +32,11 @@ ethereum$drawDyplotProphet(periods = 365)
 bitcoin$drawDyplotProphet(periods = 365)
 cardano$drawDyplotProphet(periods = 365)
 polkadot$drawDyplotProphet(periods = 365)
+
+### get historical data from db
+ethereum_data <- ethereum$getCryptoDataFromDB(connString = cs, dateFrom = "2021-01-01")
+ethereum_data <- ethereum$getCryptoDataFromDB(connString = cs, dateTo = "2021-01-01")
+ethereum_data <- ethereum$getCryptoDataFromDB(connString = cs, dateFrom = "2020-01-01", dateTo = "2020-12-31")
 
 # Plot some graphs --------------------------------------------------------
 ggplot() + 
@@ -54,7 +54,7 @@ onlyClosePrice <- bitcoin$getCryptoData() %>%
   select(Date, starts_with("Close")) %>%
   rename("Bitcoin"="Close.x", "Ethereum"="Close.y", "Cardano"="Close")
 
-
+## plot correlation chart
 chart.Correlation(onlyClosePrice[2:ncol(onlyClosePrice)], histogram=TRUE, pch=19)
 
 ggplot() + 
@@ -65,4 +65,3 @@ ggplot() +
   ylab('log10(ClosePrice)') +
   ggtitle("Ethereum, Bitcoin, Cardano for common Dates") +
   scale_color_discrete(name = "Cryptocurrency:", labels = c("Bitcoin", "Cardano", "Ethereum"))
-

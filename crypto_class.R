@@ -1,15 +1,19 @@
-sapply(c("tidyverse", "rvest", "R6", "dplyr", "prophet", "RSQLS"), require, character.only = TRUE)
+sapply(c("tidyverse", "rvest", "R6", "dplyr", "prophet", "RSQLS", "bit64"), require, character.only = TRUE)
 
 CleanHtmlData <- R6::R6Class("CleanHtmlData",
+                             
   private = list(
     ..path_to_file = as.character(),
     ..file_name = as.character(),
-    ..data = data.frame()
+    ..data = data.frame(),
+    ..table_name = as.character()
   ),
+  
   public = list(
-    initialize = function(path_to_file, file_name) {
+    initialize = function(path_to_file, file_name, tableName) {
       private$..path_to_file = path_to_file
       private$..file_name = file_name
+      private$..table_name = tableName
       raw_table = readLines(paste0(path_to_file, file_name))
       private$..data = rvest::minimal_html(raw_table) %>%
         html_node("table") %>%
@@ -20,18 +24,14 @@ CleanHtmlData <- R6::R6Class("CleanHtmlData",
       colnames(private$..data) =  str_remove_all(colnames(private$..data), "[\\* ]")
     },
     
-    getCryptoName = function() {
-      return (tools::file_path_sans_ext(private$..file_name))
-    },
+    getCryptoName = function() { return (tools::file_path_sans_ext(private$..file_name)) },
     
-    getCryptoData = function() {
-      return(private$..data)
-    },
+    getCryptoData = function() { return(private$..data) },
     
     getCryptoDataFromDB = function(connString, 
                                    dateFrom = NULL, 
                                    dateTo = NULL) {
-      sql_task = "SELECT * FROM dbo.cryptocurrency"
+      sql_task = paste0("SELECT * FROM ", private$..table_name)
       
       if (is.null(dateFrom) & is.null(dateTo)) {
         # return all data
@@ -53,10 +53,9 @@ CleanHtmlData <- R6::R6Class("CleanHtmlData",
       
       sql_task = paste0(sql_task, " ORDER BY Date DESC")
       
-      data <- pull_data(connectionString = connString, 
+      return (pull_data(connectionString = connString, 
                             sqltask = sql_task, 
-                            showprogress = FALSE)
-      return (data)
+                            showprogress = FALSE))
     },
     
     getDataInfo = function(data) {
@@ -71,8 +70,7 @@ CleanHtmlData <- R6::R6Class("CleanHtmlData",
     
     getProphetData = function() {
       prophet_data <- private$..data
-      prophet_data = prophet_data %>% select(Date, Close) %>% rename(ds=Date, y=Close)
-      return(prophet_data)
+      return (prophet_data %>% select(Date, Close) %>% rename(ds=Date, y=Close))
     },
     
     drawDyplotProphet = function(periods) {
@@ -90,8 +88,7 @@ CleanHtmlData <- R6::R6Class("CleanHtmlData",
     
     updateData = function(connString) {
       db_dates <- pull_data(connectionString = connString, 
-                            sqltask = paste0("SELECT Date FROM dbo.cryptocurrency WHERE CryptoName = '", 
-                                                                    self$getCryptoName(), "'"), 
+                            sqltask = paste0("SELECT Date FROM ", private$..table_name, " WHERE CryptoName = '", self$getCryptoName(), "'"), 
                             showprogress = FALSE) %>% .$Date
       
       missing_dates <- self$getCryptoData()[!self$getCryptoData()$Date %in% db_dates,]
@@ -100,7 +97,9 @@ CleanHtmlData <- R6::R6Class("CleanHtmlData",
         dates_to_update <- paste0(missing_dates$Date, collapse = ", ")
         cat("\nDates to be updated: ", dates_to_update, "\n")
         push_data(connString, missing_dates %>% mutate(CryptoName=self$getCryptoName()), 
-                  "dbo.cryptocurrency", showprogress = TRUE, append = TRUE)
+                  private$..table_name, 
+                  showprogress = TRUE, 
+                  append = TRUE)
       } else {
         cat("\nAll up to date!\n")
       }
