@@ -28,6 +28,37 @@ CleanHtmlData <- R6::R6Class("CleanHtmlData",
       return(private$..data)
     },
     
+    getCryptoDataFromDB = function(connString, 
+                                   dateFrom = NULL, 
+                                   dateTo = NULL) {
+      sql_task = "SELECT * FROM dbo.cryptocurrency"
+      
+      if (is.null(dateFrom) & is.null(dateTo)) {
+        # return all data
+        cat("\n---------- Returning all the data for ", self$getCryptoName(), " ----------\n")
+        sql_task = paste0(sql_task, " WHERE CryptoName = '", self$getCryptoName(), "'")
+      } else if (!is.null(dateFrom) & is.null(dateTo)) {
+        # return data from until the end
+        cat("\n---------- Returning data from ", dateFrom, " till the end for ", self$getCryptoName(), " ----------\n")
+        sql_task = paste0(sql_task, " WHERE Date >= '", dateFrom, "' AND CryptoName = '", self$getCryptoName(), "'")
+      } else if (is.null(dateFrom) & !is.null(dateTo)) {
+        # return all data until some date
+        cat("\n---------- Returning all data until ", dateTo, " for ", self$getCryptoName(), " ----------\n")
+        sql_task = paste0(sql_task, " WHERE Date <= '", dateTo, "' AND CryptoName = '", self$getCryptoName(), "'")
+      } else {
+        # return date range
+        cat("\n---------- Returning all data from ", dateFrom, " to ", dateTo, " for ", self$getCryptoName(), " ----------\n")
+        sql_task = paste0(sql_task, " WHERE Date BETWEEN '", dateFrom, "' AND '", dateTo,"' AND CryptoName = '", self$getCryptoName(), "'")
+      }
+      
+      sql_task = paste0(sql_task, " ORDER BY Date DESC")
+      
+      data <- pull_data(connectionString = connString, 
+                            sqltask = sql_task, 
+                            showprogress = FALSE)
+      return (data)
+    },
+    
     getDataInfo = function(data) {
       cat("\n----------------------------------------------------\n")
       cat("\trows: ", nrow(data), "\tcols: ", ncol(data), "\n")
@@ -59,7 +90,7 @@ CleanHtmlData <- R6::R6Class("CleanHtmlData",
     
     updateData = function(connString) {
       db_dates <- pull_data(connectionString = connString, 
-                            sqltask = paste0("select Date from dbo.cryptocurrency where CryptoName = '", 
+                            sqltask = paste0("SELECT Date FROM dbo.cryptocurrency WHERE CryptoName = '", 
                                                                     self$getCryptoName(), "'"), 
                             showprogress = FALSE) %>% .$Date
       

@@ -1,6 +1,5 @@
-
 # Load Packages -----------------------------------------------------------
-sapply(c("ggplot2", "PerformanceAnalytics", "RSQLS"), require, character.only = TRUE)
+sapply(c("ggplot2", "PerformanceAnalytics", "bit64"), require, character.only = TRUE)
 
 # Load Properties ---------------------------------------------------------
 source('./crypto_class.R')
@@ -22,6 +21,11 @@ cs <- set_connString(datasource = Sys.getenv()[["Crypto_DataSource"]],
                      usr = Sys.getenv()[["Crypto_User"]],
                      pwd = Sys.getenv()[["Crypto_Pwd"]])
 # RSQLS::get_DB_info(cs)
+
+### get historical data from db
+ethereum_data <- ethereum$getCryptoDataFromDB(connString = cs, dateFrom = "2021-01-01")
+ethereum_data <- ethereum$getCryptoDataFromDB(connString = cs, dateTo = "2021-01-01")
+ethereum_data <- ethereum$getCryptoDataFromDB(connString = cs, dateFrom = "2020-01-01", dateTo = "2020-12-31")
 
 ### update the data
 ethereum$updateData(connString = cs)
