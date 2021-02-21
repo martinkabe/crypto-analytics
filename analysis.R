@@ -20,6 +20,21 @@ bitcoin <- CleanHtmlData$new(path_to_file, "bitcoin.csv", table_name)
 cardano <- CleanHtmlData$new(path_to_file, "cardano.csv", table_name)
 polkadot <- CleanHtmlData$new(path_to_file, "polkadot.csv", table_name)
 
+## test for general object
+general_obj <- CleanHtmlData$new(file_name = "ethereum.csv", tableName = table_name)
+general_obj$getCryptoName()
+general_obj$getCryptoData()
+
+crypto_data <- general_obj$getCryptoDataFromDB(connString = cs, 
+                                               dateFrom = "2021-01-01", 
+                                               cryptos = c("bitcoin", "ethereum"))
+
+general_obj$getDataInfo(crypto_data)
+general_obj$drawDyplotProphet(data_prophet = general_obj$getProphetData(data = crypto_data,
+                                                                        cryptoName = "bitcoin"), 
+                              periods = 365)
+
+general_obj$updateData(connString = cs)
 
 # Update the data in DB ---------------------------------------------------
 ### update the data
