@@ -50,12 +50,17 @@ CleanHtmlData <- R6::R6Class("CleanHtmlData",
                                    cryptos = NULL) {
       sql_task = paste0("SELECT * FROM ", private$..table_name)
       
-      if (!is.null(cryptos)) {
-        crypto_name = paste0("'", cryptos, "'", collapse = ", ")
-        crypto_name_task = paste0(" CryptoName in (", crypto_name, ")")
+      if (!is.null(private$..path_to_file)) {
+        crypto_name = paste0("'", self$getCryptoName(), "'")
+        crypto_name_task = paste0(" CryptoName = ", crypto_name)
       } else {
-        crypto_name = "ALL"
-        crypto_name_task = NULL
+        if (!is.null(cryptos)) {
+          crypto_name = paste0("'", cryptos, "'", collapse = ", ")
+          crypto_name_task = paste0(" CryptoName in (", crypto_name, ")")
+        } else {
+          crypto_name = "ALL"
+          crypto_name_task = NULL
+        }
       }
       
       if (is.null(dateFrom) & is.null(dateTo)) {
