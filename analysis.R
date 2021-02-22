@@ -43,7 +43,7 @@ bitcoin$updateData(connString = cs)
 cardano$updateData(connString = cs)
 polkadot$updateData(connString = cs)
 
-ethereum$drawDyplotProphet(periods = 365)
+ethereum$drawDyplotProphet(data_prophet = ethereum$getProphetData(), periods = 365)
 bitcoin$drawDyplotProphet(periods = 365)
 cardano$drawDyplotProphet(periods = 365)
 polkadot$drawDyplotProphet(periods = 365)
@@ -80,3 +80,13 @@ ggplot() +
   ylab('log10(ClosePrice)') +
   ggtitle("Ethereum, Bitcoin, Cardano for common Dates") +
   scale_color_discrete(name = "Cryptocurrency:", labels = c("Bitcoin", "Cardano", "Ethereum"))
+
+
+## plot time series from db
+general_obj <- CleanHtmlData$new(tableName = table_name)
+all_data <- general_obj$getCryptoDataFromDB(connString = cs)
+
+ggplot(all_data, aes(x = Date, y = log10(Close))) + 
+  geom_line(aes(color = CryptoName), size = 1) +
+  scale_color_manual(values = c("#00AFBB", "#E7B800", "#FF0000", "#00FFFF")) +
+  theme_minimal()

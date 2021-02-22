@@ -6,7 +6,8 @@ CleanHtmlData <- R6::R6Class("CleanHtmlData",
     ..path_to_file = as.character(),
     ..file_name = as.character(),
     ..data = data.frame(),
-    ..table_name = as.character()
+    ..table_name = as.character(),
+    ..prophet_crypto_name = as.character()
   ),
   
   public = list(
@@ -107,12 +108,18 @@ CleanHtmlData <- R6::R6Class("CleanHtmlData",
       cat("\n")
     },
     
-    getProphetData = function(data, cryptoName) {
-      return (data %>% filter(CryptoName == cryptoName) %>% select(Date, Close) %>% rename(ds=Date, y=Close))
+    getProphetData = function(data = NULL, cryptoName = NULL) {
+      if (is.null(private$..path_to_file)) {
+        private$..prophet_crypto_name = cryptoName
+        return (data %>% filter(CryptoName == cryptoName) %>% select(Date, Close) %>% rename(ds=Date, y=Close))
+      } else {
+        private$..prophet_crypto_name = self$getCryptoName()
+        return (private$..data %>% select(Date, Close) %>% rename(ds=Date, y=Close))
+      }
     },
     
     drawDyplotProphet = function(data_prophet, periods) {
-      cryptoName <- unique(data_prophet$CryptoName)
+      cryptoName = private$..prophet_crypto_name
       model <- prophet(data_prophet)
       future <- make_future_dataframe(model, periods = periods)
       
