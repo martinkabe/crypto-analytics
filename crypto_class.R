@@ -108,25 +108,26 @@ CleanHtmlData <- R6::R6Class("CleanHtmlData",
       cat("\n")
     },
     
-    getProphetData = function(data = NULL, cryptoName = NULL) {
+    drawDyplotProphet = function(data, cryptoname = NULL, periods = 365) {
+      
+      cat("Creating prophet data.frame ...\n")
       if (is.null(private$..path_to_file)) {
-        private$..prophet_crypto_name = cryptoName
-        return (data %>% filter(CryptoName == cryptoName) %>% select(Date, Close) %>% rename(ds=Date, y=Close))
+        data_prophet <- data %>% filter(CryptoName == cryptoname) %>% select(Date, Close) %>% rename(ds=Date, y=Close)
       } else {
         private$..prophet_crypto_name = self$getCryptoName()
-        return (private$..data %>% select(Date, Close) %>% rename(ds=Date, y=Close))
+        data_prophet <- private$..data %>% select(Date, Close) %>% rename(ds=Date, y=Close)
       }
-    },
-    
-    drawDyplotProphet = function(data_prophet, periods) {
-      cryptoName = private$..prophet_crypto_name
+      cat("Creating prophet model ...\n")
       model <- prophet(data_prophet)
+      cat("Creating future data.frame based on prohpet model ...\n")
       future <- make_future_dataframe(model, periods = periods)
       
+      cat("Creating prophet future prediction with prediction interval ...\n")
       forecast <- predict(model, future)
+      cat("Plotting prophet chart ...\n")
       dyplot.prophet(model, forecast, 
                      main=paste0("Time Series for ", 
-                                 cryptoName, " [", 
+                                 cryptoname, " [", 
                                  min(data_prophet$ds), "::", 
                                  max(data_prophet$ds), "]"))
     },

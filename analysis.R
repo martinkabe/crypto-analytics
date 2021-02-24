@@ -91,7 +91,7 @@ ggplot(all_data, aes(x = Date, y = log10(Close))) +
   scale_color_manual(values = c("#00AFBB", "#E7B800", "#FF0000", "#00FFFF")) +
   theme_minimal()
 
-general_obj$drawDyplotProphet(data_prophet = general_obj$getProphetData(data = all_data, cryptoName = "bitcoin"), periods = 365)
-general_obj$drawDyplotProphet(data_prophet = general_obj$getProphetData(data = all_data, cryptoName = "cardano"), periods = 365)
-general_obj$drawDyplotProphet(data_prophet = general_obj$getProphetData(data = all_data, cryptoName = "ethereum"), periods = 365)
-general_obj$drawDyplotProphet(data_prophet = general_obj$getProphetData(data = all_data, cryptoName = "polkadot"), periods = 365)
+general_obj$drawDyplotProphet(data = all_data, cryptoname = "bitcoin")
+general_obj$drawDyplotProphet(data = all_data, cryptoname = "cardano")
+general_obj$drawDyplotProphet(data = all_data, cryptoname = "ethereum")
+general_obj$drawDyplotProphet(data = all_data, cryptoname = "polkadot")
